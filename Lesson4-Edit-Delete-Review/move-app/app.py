@@ -90,8 +90,7 @@ def load_initial_movies():
             print(f"Added {len(movies)} movies to database!")
         else:
             print(f"Database already has {Movie.query.count()} movies!")
-
-            
+         
 # ============================
 # ROUTES
 # ============================
@@ -124,46 +123,65 @@ def add_movie():
     """Add a new movie to the database"""
     if request.method == 'POST':
         #request.form.get() - retrieves the value from the form field
-        #The parameter name must match the 'name' attribute in the HTML Form
+        #the parameter name must match the 'name' attribute in the HTML Form
         title = request.form.get('title')
         year = request.form.get('year', type=int) #converts str to int
-        genre = request.form.get('genre') 
-        director = request.form.get('director') 
-        rating = request.form.get('rating', type=int) #converts str to a float
-        description = request.form.get('description') 
-        poster_url = request.form.get('poster_url') 
+        genre = request.form.get('genre')
+        director = request.form.get('director')
+        rating = request.form.get('rating', type=float) #converts str to float
+        description = request.form.get('description')
+        poster_url = request.form.get('poster_url')
         if not poster_url:
             poster_url = f"https://placehold.co/300x450/gray/white?text={title}"
 
-        #Validaation with better messages
-        if not title:
-            flash("❌ Title is required! Please enter a movie Title!", 'error')
-            return redirect(url_for("add_movie"))
-
+        # #Validation with better messages
+        # if not title:
+        #     flash("❌ Title is required! Please enter a movie Title!","error")
+        #     return redirect(url_for("add_movie"))
+        
         #Create a new movie object
         new_movie = Movie(
             title = title,
             year = year,
             genre = genre,
-            director = director, 
+            director = director,
             rating = rating,
             description = description,
             poster_url = poster_url
         )
-
-        #Add to database session(starting area)
+        #Add to database session(stating area)
         db.session.add(new_movie)
         #Commit to database (make changes permanent)
         db.session.commit()
-
+        
         #Success message
-        flash(f'✅"{title}" was added successfully!', 'success')
-
+        flash(f'✅"{title}" was added successfully!','success')
+        
         #Redirect to the movies list page
         return redirect(url_for('movies_list'))
+        
     #If GET request, just show the form
     return render_template("add_movie.html")
 
+@app.route('/movie/<int:id>/edit', methods = ["GET", "POST"])
+def edit_movie(id):
+    movie = Movie.query.get_or_404(id) #Get existing movie
+    if request.method == 'POST':
+        #update the existing movie object
+        movie.title = request.form.get('title')
+        movie.year = request.form.get('year', type=int) #converts str to int
+        movie.genre = request.form.get('genre')
+        movie.director = request.form.get('director')
+        movie.rating = request.form.get('rating', type=float) #converts str to float
+        movie.description = request.form.get('description')
+        movie.poster_url = request.form.get('poster_url')
+        if not poster_url:
+            poster_url = f"https://placehold.co/300x450/gray/white?text={movie.title}"
+        # No db.session.add() needed! Object already tracked
+        db.session.commit()
+        flash(f'Movie "{movie.title}" updated', 'success')
+        return redirect(url_for('movies_list'))
+    return render_template('edit_movie.html', movie=movie)
 # ============================================================================
 # ERROR HANDLERS
 # ============================================================================
