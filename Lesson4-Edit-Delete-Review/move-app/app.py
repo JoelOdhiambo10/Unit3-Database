@@ -175,13 +175,26 @@ def edit_movie(id):
         movie.rating = request.form.get('rating', type=float) #converts str to float
         movie.description = request.form.get('description')
         movie.poster_url = request.form.get('poster_url')
-        if not poster_url:
-            poster_url = f"https://placehold.co/300x450/gray/white?text={movie.title}"
+        if not movie.poster_url:
+            movie.poster_url = f"https://placehold.co/300x450/gray/white?text={movie.title}"
         # No db.session.add() needed! Object already tracked
         db.session.commit()
         flash(f'Movie "{movie.title}" updated', 'success')
         return redirect(url_for('movies_list'))
     return render_template('edit_movie.html', movie=movie)
+
+@app.route("/movie/int<int:id>/delete", methods=['POST'])
+def delete_movie(id):
+    movie = Movie.query.get_or_404(id)
+    #IMPORTANT: Save title before deleting
+    #After db.session.delete(), movie.title becomes None!
+    title = movie.title
+    # Delete from database
+    db.session.delete(movie)
+    db.session.commit()
+    #Flash a message with saved title
+    flash(f'🗑️ Movie "{title}" deleted successfully.', 'success')
+    return redirect(url_for('movies_list'))
 # ============================================================================
 # ERROR HANDLERS
 # ============================================================================
